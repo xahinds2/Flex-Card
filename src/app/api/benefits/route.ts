@@ -5,6 +5,7 @@ import { getAuthUser } from '@/lib/authHelper';
 import UserCard from '@/models/UserCard';
 import CardBenefit from '@/models/CardBenefit';
 import { mockDb } from '@/lib/mockDb';
+import { generateCardBenefitsAI } from '@/lib/aiHelper';
 
 export async function GET(req: Request) {
   try {
@@ -47,7 +48,23 @@ export async function GET(req: Request) {
         benefitQuery.category = category;
       }
 
-      const benefits = await CardBenefit.find(benefitQuery);
+      let benefits = await CardBenefit.find(benefitQuery);
+      
+      // If no benefits found in database, dynamically generate them via AI just-in-time!
+      if (benefits.length === 0 && process.env.OLLAMA_BASE_URL) {
+        try {
+          const generated = await generateCardBenefitsAI(uc.bank, uc.variant, uc.network);
+          if (generated.length > 0) {
+            benefits = generated;
+            // If the original request specified a category, filter the newly generated ones
+            if (category) {
+              benefits = benefits.filter(b => b.category === category);
+            }
+          }
+        } catch (aiErr) {
+          console.error('[API AI Fallback Error] Just-in-time generation failed:', aiErr);
+        }
+      }
       
       for (const b of benefits) {
         cardBenefits.push({

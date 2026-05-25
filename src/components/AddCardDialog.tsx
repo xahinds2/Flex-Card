@@ -62,7 +62,7 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bank.trim() || !variant.trim()) {
-      setErrorMsg('Please specify both Bank name and Card variant.');
+      setErrorMsg('Please search and select a card from the popular cards search above.');
       return;
     }
 
@@ -199,44 +199,40 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
 
             <div className="h-px bg-white/5 my-4" />
 
-            {/* Manual Entries */}
+            {/* Manual Entries (Disabled for manual entry to ensure exact seed matching) */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                   Bank Name
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. HDFC Bank"
+                  readOnly
+                  disabled
+                  placeholder="Select from search above"
                   value={bank}
-                  onChange={(e) => {
-                    setBank(e.target.value);
-                    setErrorMsg('');
-                  }}
-                  className="w-full px-3 py-1.5 bg-slate-900/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition shadow-inner"
+                  className="w-full px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-lg text-sm text-slate-400 placeholder-slate-600 focus:outline-none cursor-not-allowed transition shadow-inner"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                   Card Variant
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Infinia"
+                  readOnly
+                  disabled
+                  placeholder="Select from search above"
                   value={variant}
-                  onChange={(e) => {
-                    setVariant(e.target.value);
-                    setErrorMsg('');
-                  }}
-                  className="w-full px-3 py-1.5 bg-slate-900/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition shadow-inner"
+                  className="w-full px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-lg text-sm text-slate-400 placeholder-slate-600 focus:outline-none cursor-not-allowed transition shadow-inner"
                 />
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                 Card Network
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -244,11 +240,11 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
                   <button
                     key={net}
                     type="button"
-                    onClick={() => setNetwork(net)}
-                    className={`py-2 text-xs font-medium rounded-lg border transition ${
+                    disabled
+                    className={`py-2 text-xs font-medium rounded-lg border transition cursor-not-allowed ${
                       network === net
                         ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
-                        : 'bg-slate-900/30 text-slate-400 border-white/5 hover:bg-white/5 hover:text-slate-300'
+                        : 'bg-slate-950/20 text-slate-600 border-white/5'
                     }`}
                   >
                     {net}

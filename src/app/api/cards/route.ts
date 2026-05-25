@@ -4,6 +4,7 @@ import { connectToDatabase } from '@/lib/db';
 import { getAuthUser } from '@/lib/authHelper';
 import UserCard from '@/models/UserCard';
 import { mockDb } from '@/lib/mockDb';
+import { SEED_CARDS } from '@/lib/seedData';
 
 export async function GET() {
   try {
@@ -32,6 +33,19 @@ export async function POST(req: Request) {
     if (!bank || !variant || !network) {
       return NextResponse.json(
         { error: 'Missing required parameters: bank, variant, network' },
+        { status: 400 }
+      );
+    }
+
+    // Server-side validation to ensure exact match with seeded cards
+    const isSupported = SEED_CARDS.some(
+      (c) => c.bank.toLowerCase() === bank.trim().toLowerCase() && 
+             c.variant.toLowerCase() === variant.trim().toLowerCase()
+    );
+
+    if (!isSupported) {
+      return NextResponse.json(
+        { error: `Unsupported card variant "${bank} ${variant}". You must select one of our supported cards.` },
         { status: 400 }
       );
     }

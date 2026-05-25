@@ -16,7 +16,8 @@ import AddCardDialog from '@/components/AddCardDialog';
 import BenefitsConsole, { BenefitItem } from '@/components/BenefitsConsole';
 
 interface CardItem {
-  id: string;
+  id?: string;
+  _id?: string;
   bank: string;
   variant: string;
   network: 'Visa' | 'Mastercard' | 'RuPay' | 'Amex';
@@ -246,15 +247,15 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {cards.map((card) => (
                 <CreditCard
-                  key={card.id}
-                  id={card.id}
+                  key={card.id || card._id}
+                  id={card.id || card._id || ''}
                   bank={card.bank}
                   variant={card.variant}
                   network={card.network}
                   nickname={card.nickname}
                   onDelete={handleDeleteCard}
-                  onClick={() => handleSelectCard(card.id)}
-                  active={activeCardId === card.id}
+                  onClick={() => handleSelectCard(card.id || card._id || '')}
+                  active={activeCardId === (card.id || card._id)}
                 />
               ))}
 
