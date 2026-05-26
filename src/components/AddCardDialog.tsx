@@ -130,7 +130,7 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
       />
 
       {/* Dialog Panel */}
-      <div className="relative w-full max-w-4xl glass-panel rounded-2xl border border-white/10 shadow-2xl flex flex-col md:flex-row overflow-hidden max-h-[90vh] md:max-h-[600px] z-10 animate-float-delayed">
+      <div className="relative w-full max-w-4xl glass-panel rounded-2xl border border-white/10 shadow-2xl flex flex-col md:flex-row overflow-hidden max-h-[90vh] md:max-h-[600px] z-10">
         
         {/* Real-time Digital Card Preview (Left Side) */}
         <div className="flex-1 bg-slate-950/60 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/5 space-y-6">

@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [activeSection, setActiveSection] = useState<'wallet' | 'explore'>('wallet');
 
   // Fetch all added cards
   const fetchCards = async () => {
@@ -108,6 +109,7 @@ export default function Dashboard() {
       setActiveCardId(null); // Deselect to show all
     } else {
       setActiveCardId(id);
+      setActiveSection('explore'); // Automatically switch to explore tab to see benefits!
     }
   };
 
@@ -186,14 +188,32 @@ export default function Dashboard() {
               Select a card below to focus on its specific perks, or click elsewhere to view aggregated benefits.
             </p>
           </div>
+        </div>
 
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold text-xs transition duration-300 flex items-center space-x-1.5 shadow-[0_4px_16px_rgba(99,102,241,0.25)] border border-indigo-400/10 cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Card variant</span>
-          </button>
+        {/* Sections Selector Tabs (Segmented Control) */}
+        <div className="flex border-b border-white/5 pb-2">
+          <div className="flex space-x-1.5 p-1 bg-slate-950/60 border border-white/10 rounded-xl w-fit">
+            <button
+              onClick={() => setActiveSection('wallet')}
+              className={`px-6 py-2 rounded-lg text-xs font-semibold tracking-wider uppercase transition-all duration-300 cursor-pointer ${
+                activeSection === 'wallet'
+                  ? 'bg-indigo-600 text-white shadow-[0_2px_12px_rgba(99,102,241,0.35)]'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              My Wallet
+            </button>
+            <button
+              onClick={() => setActiveSection('explore')}
+              className={`px-6 py-2 rounded-lg text-xs font-semibold tracking-wider uppercase transition-all duration-300 cursor-pointer ${
+                activeSection === 'explore'
+                  ? 'bg-indigo-600 text-white shadow-[0_2px_12px_rgba(99,102,241,0.35)]'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Explore Perks
+            </button>
+          </div>
         </div>
 
         {errorMsg && (
@@ -203,85 +223,89 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Cards Carousel/Grid Section */}
-        <div className="w-full flex flex-col space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">
-              My Wallet ({cards.length} cards)
-            </span>
-            {activeCardId && (
-              <button
-                onClick={() => setActiveCardId(null)}
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline transition"
-              >
-                Clear selection (Show all)
-              </button>
-            )}
-          </div>
-
-          {isLoadingCards ? (
-            // Cards skeletons
-            <div className="flex flex-wrap gap-6">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-48 w-80 rounded-2xl border border-white/5 bg-slate-900/10 animate-shimmer" />
-              ))}
+        {/* Section 1: Wallet Section */}
+        {activeSection === 'wallet' && (
+          <div className="w-full flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wider text-slate-500 font-bold">
+                My Wallet ({cards.length} cards)
+              </span>
+              {activeCardId && (
+                <button
+                  onClick={() => setActiveCardId(null)}
+                  className="text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline transition"
+                >
+                  Clear selection (Show all)
+                </button>
+              )}
             </div>
-          ) : cards.length === 0 ? (
-            // Empty wallet state
-            <div
-              onClick={() => setIsAddOpen(true)}
-              className="group border border-dashed border-white/10 hover:border-indigo-500/40 bg-slate-900/10 hover:bg-slate-900/20 rounded-2xl p-8 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer transition-all duration-300 max-w-sm"
-            >
-              <div className="p-3.5 rounded-full bg-slate-950/80 border border-white/5 text-slate-400 group-hover:text-indigo-400 group-hover:scale-105 transition-all duration-300">
-                <Plus className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-200">No cards in your nest</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Click here to manually select credit cards variants and unlock catalog benefit details instantly!
-                </p>
-              </div>
-            </div>
-          ) : (
-            // Grid of credit cards
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {cards.map((card) => (
-                <CreditCard
-                  key={card.id || card._id}
-                  id={card.id || card._id || ''}
-                  bank={card.bank}
-                  variant={card.variant}
-                  network={card.network}
-                  nickname={card.nickname}
-                  onDelete={handleDeleteCard}
-                  onClick={() => handleSelectCard(card.id || card._id || '')}
-                  active={activeCardId === (card.id || card._id)}
-                />
-              ))}
 
-              {/* Glowing empty quick-add slot card */}
+            {isLoadingCards ? (
+              // Cards skeletons
+              <div className="flex flex-wrap gap-6">
+                {[1, 2].map((i) => (
+                  <div key={i} className="h-48 w-80 rounded-2xl border border-white/5 bg-slate-900/10 animate-shimmer" />
+                ))}
+              </div>
+            ) : cards.length === 0 ? (
+              // Empty wallet state
               <div
                 onClick={() => setIsAddOpen(true)}
-                className="h-48 w-full md:w-80 border border-dashed border-white/10 hover:border-indigo-500/40 bg-slate-900/5 hover:bg-indigo-950/5 rounded-2xl flex flex-col items-center justify-center text-center p-6 cursor-pointer group transition-all duration-300 select-none"
+                className="group border border-dashed border-white/10 hover:border-indigo-500/40 bg-slate-900/10 hover:bg-slate-900/20 rounded-2xl p-8 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer transition-all duration-300 max-w-sm"
               >
-                <div className="p-2 rounded-xl bg-slate-900 border border-white/5 text-slate-500 group-hover:text-indigo-400 group-hover:border-indigo-500/20 group-hover:scale-105 transition-all duration-300 shadow-inner">
-                  <Plus className="h-4 w-4" />
+                <div className="p-3.5 rounded-full bg-slate-950/80 border border-white/5 text-slate-400 group-hover:text-indigo-400 group-hover:scale-105 transition-all duration-300">
+                  <Plus className="h-6 w-6" />
                 </div>
-                <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200 transition duration-300 mt-3">
-                  Add another card variant
-                </span>
-                <span className="text-[10px] text-slate-600 mt-1 uppercase tracking-widest font-mono">
-                  manual entry
-                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-200">No cards in your nest</h3>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Click here to manually select credit cards variants and unlock catalog benefit details instantly!
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            ) : (
+              // Grid of credit cards
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {cards.map((card) => (
+                  <CreditCard
+                    key={card.id || card._id}
+                    id={card.id || card._id || ''}
+                    bank={card.bank}
+                    variant={card.variant}
+                    network={card.network}
+                    nickname={card.nickname}
+                    onDelete={handleDeleteCard}
+                    onClick={() => handleSelectCard(card.id || card._id || '')}
+                    active={activeCardId === (card.id || card._id)}
+                  />
+                ))}
 
-        {/* Benefits console section */}
-        <div className="pt-4">
-          <BenefitsConsole benefits={benefits} isLoading={isLoadingBenefits} />
-        </div>
+                {/* Glowing empty quick-add slot card */}
+                <div
+                  onClick={() => setIsAddOpen(true)}
+                  className="h-48 w-full md:w-80 border border-dashed border-white/10 hover:border-indigo-500/40 bg-slate-900/5 hover:bg-indigo-950/5 rounded-2xl flex flex-col items-center justify-center text-center p-6 cursor-pointer group transition-all duration-300 select-none"
+                >
+                  <div className="p-2 rounded-xl bg-slate-900 border border-white/5 text-slate-500 group-hover:text-indigo-400 group-hover:border-indigo-500/20 group-hover:scale-105 transition-all duration-300 shadow-inner">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200 transition duration-300 mt-3">
+                    Add another card variant
+                  </span>
+                  <span className="text-[10px] text-slate-600 mt-1 uppercase tracking-widest font-mono">
+                    manual entry
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Section 2: Explore Section */}
+        {activeSection === 'explore' && (
+          <div className="pt-2 animate-fade-in">
+            <BenefitsConsole benefits={benefits} isLoading={isLoadingBenefits} />
+          </div>
+        )}
 
       </main>
 
