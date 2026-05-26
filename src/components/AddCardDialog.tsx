@@ -16,17 +16,34 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
   const [variant, setVariant] = useState('');
   const [network, setNetwork] = useState<'Visa' | 'Mastercard' | 'RuPay' | 'Amex'>('Visa');
   const [nickname, setNickname] = useState('');
-  const [suggestions, setSuggestions] = useState<CardTemplate[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [catalog, setCatalog] = useState<any[]>(SEED_CARDS);
 
   const suggestionRef = useRef<HTMLDivElement>(null);
+
+  // Fetch full cards catalog on mount
+  useEffect(() => {
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/cards/catalog');
+        if (res.ok) {
+          const json = await res.json();
+          setCatalog(json.data || []);
+        }
+      } catch (err) {
+        console.error('Failed to load card catalog:', err);
+      }
+    }
+    loadCatalog();
+  }, []);
 
   // Sync suggestion dropdown
   useEffect(() => {
     if (searchQuery.trim().length > 0) {
-      const filtered = SEED_CARDS.filter(
+      const filtered = catalog.filter(
         c =>
           c.bank.toLowerCase().includes(searchQuery.toLowerCase()) ||
           c.variant.toLowerCase().includes(searchQuery.toLowerCase())
@@ -35,7 +52,7 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
     } else {
       setSuggestions([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, catalog]);
 
   // Click outside listener for suggestions dropdown
   useEffect(() => {
@@ -62,7 +79,7 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bank.trim() || !variant.trim()) {
-      setErrorMsg('Please search and select a card from the popular cards search above.');
+      setErrorMsg('Please enter a bank name and card variant.');
       return;
     }
 
@@ -177,7 +194,7 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
 
               {/* Suggestions Dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-40 overflow-y-auto glass-panel rounded-lg border border-white/10 shadow-lg text-sm">
+                <div className="absolute top-full left-0 right-0 z-20 mt-1 max-h-40 overflow-y-auto bg-slate-950/95 border border-white/15 backdrop-blur-xl rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.8)] text-sm no-scrollbar">
                   {suggestions.map((card, i) => (
                     <div
                       key={i}
@@ -199,40 +216,38 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
 
             <div className="h-px bg-white/5 my-4" />
 
-            {/* Manual Entries (Disabled for manual entry to ensure exact seed matching) */}
+            {/* Manual Entries (Fully editable to allow custom cards!) */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
                   Bank Name
                 </label>
                 <input
                   type="text"
                   required
-                  readOnly
-                  disabled
-                  placeholder="Select from search above"
+                  placeholder="e.g. HDFC Bank"
                   value={bank}
-                  className="w-full px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-lg text-sm text-slate-400 placeholder-slate-600 focus:outline-none cursor-not-allowed transition shadow-inner"
+                  onChange={(e) => setBank(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-slate-900/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition shadow-inner cursor-text"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
                   Card Variant
                 </label>
                 <input
                   type="text"
                   required
-                  readOnly
-                  disabled
-                  placeholder="Select from search above"
+                  placeholder="e.g. Infinia"
                   value={variant}
-                  className="w-full px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-lg text-sm text-slate-400 placeholder-slate-600 focus:outline-none cursor-not-allowed transition shadow-inner"
+                  onChange={(e) => setVariant(e.target.value)}
+                  className="w-full px-3 py-1.5 bg-slate-900/60 border border-white/10 rounded-lg text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition shadow-inner cursor-text"
                 />
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                 Card Network
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -240,11 +255,11 @@ export default function AddCardDialog({ isOpen, onClose, onSuccess }: AddCardDia
                   <button
                     key={net}
                     type="button"
-                    disabled
-                    className={`py-2 text-xs font-medium rounded-lg border transition cursor-not-allowed ${
+                    onClick={() => setNetwork(net)}
+                    className={`py-2 text-xs font-medium rounded-lg border transition cursor-pointer hover:bg-white/5 ${
                       network === net
-                        ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
-                        : 'bg-slate-950/20 text-slate-600 border-white/5'
+                        ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.25)] hover:bg-indigo-600/40'
+                        : 'bg-slate-900/60 text-slate-400 border-white/10'
                     }`}
                   >
                     {net}

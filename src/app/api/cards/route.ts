@@ -5,6 +5,8 @@ import { getAuthUser } from '@/lib/authHelper';
 import UserCard from '@/models/UserCard';
 import { mockDb } from '@/lib/mockDb';
 import { SEED_CARDS } from '@/lib/seedData';
+import CardBenefit from '@/models/CardBenefit';
+import { generateCardBenefitsAI } from '@/lib/aiHelper';
 
 export async function GET() {
   try {
@@ -37,19 +39,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Server-side validation to ensure exact match with seeded cards
-    const isSupported = SEED_CARDS.some(
-      (c) => c.bank.toLowerCase() === bank.trim().toLowerCase() && 
-             c.variant.toLowerCase() === variant.trim().toLowerCase()
-    );
-
-    if (!isSupported) {
-      return NextResponse.json(
-        { error: `Unsupported card variant "${bank} ${variant}". You must select one of our supported cards.` },
-        { status: 400 }
-      );
-    }
-
     const dbConn = await connectToDatabase();
 
     if (!dbConn) {
@@ -57,12 +46,47 @@ export async function POST(req: Request) {
       return NextResponse.json({ source: 'mock', data: newCard }, { status: 201 });
     }
 
+    // Dynamic database seeding of benefits for the new card variant if they don't already exist
+    const existsInDb = await CardBenefit.findOne({
+      bank: { $regex: new RegExp(`^${bank.trim()}$`, 'i') },
+      variant: { $regex: new RegExp(`^${variant.trim()}$`, 'i') }
+    });
+
+    if (!existsInDb) {
+      const seedCard = SEED_CARDS.find(
+        (c) => c.bank.toLowerCase() === bank.trim().toLowerCase() && 
+               c.variant.toLowerCase() === variant.trim().toLowerCase()
+      );
+
+      if (seedCard) {
+        // Pre-populate benefits from seed catalog
+        const records = seedCard.benefits.map((b) => ({
+          bank: seedCard.bank,
+          variant: seedCard.variant,
+          network: seedCard.network,
+          category: b.category,
+          title: b.title,
+          description: b.description,
+          value: b.value,
+          conditions: b.conditions || ''
+        }));
+        await CardBenefit.insertMany(records);
+      } else if (process.env.OLLAMA_BASE_URL) {
+        // Dynamically fetch details from internet using AI
+        try {
+          await generateCardBenefitsAI(bank.trim(), variant.trim(), network);
+        } catch (aiErr) {
+          console.error('[POST Cards AI Fallback Error] Dynamic generation failed:', aiErr);
+        }
+      }
+    }
+
     const newCard = await UserCard.create({
       userId,
-      bank,
-      variant,
+      bank: bank.trim(),
+      variant: variant.trim(),
       network,
-      nickname
+      nickname: nickname ? nickname.trim() : undefined
     });
 
     return NextResponse.json({ source: 'database', data: newCard }, { status: 201 });
